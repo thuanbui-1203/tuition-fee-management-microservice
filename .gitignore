@@ -1,0 +1,103 @@
+# ==============================================================================
+# .gitignore — Phân hệ đóng học phí iBanking (Java Spring Boot microservices + React)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Reasonix tooling — KHÔNG đưa vào repo
+# (chứa attachments, ocr_text, ocr_models ~94MB, script OCR, session artifacts)
+# ------------------------------------------------------------------------------
+.reasonix/
+
+# ------------------------------------------------------------------------------
+# Java / Maven
+# ------------------------------------------------------------------------------
+*.class
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.war
+*.ear
+*.jar
+!**/maven-wrapper.jar
+hs_err_pid*
+replay_pid*
+dependency-reduced-pom.xml
+
+# ------------------------------------------------------------------------------
+# Node / React (Vite)
+# ------------------------------------------------------------------------------
+node_modules/
+dist/
+dist-ssr/
+build/
+.vite/
+.cache/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# ------------------------------------------------------------------------------
+# Biến môi trường & bí mật (giữ lại .env.example)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+*.p12
+*.jks
+application-local.yml
+application-local.properties
+secrets/
+
+# ------------------------------------------------------------------------------
+# Log & dữ liệu tạm khi chạy
+# ------------------------------------------------------------------------------
+*.log
+logs/
+*.pid
+*.seed
+*.tmp
+tmp/
+temp/
+pgdata/
+data/
+
+# ------------------------------------------------------------------------------
+# IDE / Editor
+# ------------------------------------------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+nbproject/
+*.swp
+*.swo
+*~
+
+# ------------------------------------------------------------------------------
+# Hệ điều hành
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ------------------------------------------------------------------------------
+# Ghi chú: file cần GIỮ trong repo (không ignore)
+#   - docs/**  (kế hoạch, biểu đồ .puml, ảnh .png của báo cáo)
+#   - src/main/resources/db/migration/**  (Flyway migration)
+#   - docker-compose.yml, README.md, .env.example
+# ==============================================================================
