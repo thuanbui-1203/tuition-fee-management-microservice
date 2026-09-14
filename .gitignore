@@ -4,9 +4,11 @@
 
 # ------------------------------------------------------------------------------
 # Reasonix tooling — KHÔNG đưa vào repo
-# (chứa attachments, ocr_text, ocr_models ~94MB, script OCR, session artifacts)
+# (.reasonix/ chứa attachments, ocr_text, ocr_models ~94MB, script OCR, session artifacts)
+# reasonix.toml là file cấu hình của công cụ, không thuộc bài nộp
 # ------------------------------------------------------------------------------
 .reasonix/
+reasonix.toml
 
 # ------------------------------------------------------------------------------
 # Java / Maven
