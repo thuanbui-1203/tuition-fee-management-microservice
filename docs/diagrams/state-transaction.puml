@@ -1,0 +1,19 @@
+@startuml
+title State — Vòng đời Transaction (payment-service)
+
+[*] --> INITIATED : POST /payments
+INITIATED --> OTP_SENT : otp issue thành công
+OTP_SENT --> OTP_VERIFIED : otp verify OK
+OTP_VERIFIED --> SUCCESS : claim fee + debit OK
+SUCCESS --> [*]
+
+INITIATED --> FAILED : lỗi tạo / otp issue thất bại
+OTP_SENT --> FAILED : OTP sai quá số lần\nhoặc hết hạn / người dùng huỷ
+OTP_VERIFIED --> FAILED : claim 409 FEE_ALREADY_PAID\nhoặc debit 422 (sau compensation)
+
+note right of OTP_VERIFIED
+  Saga compensation:
+  nếu debit thất bại → gọi release fee
+  (trả fee về UNPAID) → FAILED
+end note
+@enduml

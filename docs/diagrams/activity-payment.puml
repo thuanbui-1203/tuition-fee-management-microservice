@@ -1,0 +1,61 @@
+@startuml
+title Activity — Luồng nghiệp vụ Thanh toán học phí (UC-04)
+
+|Người dùng|
+start
+:Đăng nhập (username/password);
+|Hệ thống|
+:Xác thực → hiển thị Dashboard;
+
+|Người dùng|
+:Chọn "Thanh toán học phí";
+:Nhập MSSV;
+
+|Hệ thống|
+if (MSSV tồn tại?) then (không)
+  :Báo lỗi "Không tìm thấy MSSV";
+  stop
+else (có)
+  if (Học phí UNPAID?) then (không — đã PAID)
+    :Báo lỗi "Học phí đã thanh toán"\n(khoá nút Xác nhận giao dịch);
+    stop
+  else (có)
+    :Hiển thị 3 nhóm thông tin:\n1) Người nộp tiền (read-only)\n2) Thông tin học phí (MSSV, tên SV, số tiền)\n3) Thông tin thanh toán (số dư + số tiền);
+  endif
+endif
+
+if (Số dư ≥ số tiền và thông tin hợp lệ?) then (không)
+  :Khoá nút "Xác nhận giao dịch"\n(BR2 không thoả);
+  stop
+else (có)
+  :Bật nút "Xác nhận giao dịch";
+endif
+
+|Người dùng|
+:Bấm "Xác nhận giao dịch";
+
+|Hệ thống|
+:Tạo giao dịch + sinh OTP gắn với đúng giao dịch;
+:Gửi OTP qua email người nộp tiền;
+
+|Người dùng|
+:Nhập OTP;
+
+|Hệ thống|
+if (OTP đúng + ≤ 5 phút + chưa dùng?) then (không)
+  :Báo lỗi OTP\n(sai / hết hạn / đã dùng);
+  stop
+else (có)
+  :Kiểm tra lại tính hợp lệ giao dịch và số dư;
+  if (Đủ điều kiện?) then (không)
+    :Giao dịch FAILED\n(không trừ tiền);
+    stop
+  else (có)
+    :SAGA: claim học phí (UNPAID→PAID)\n→ trừ số dư tài khoản;
+    :Lưu giao dịch vào lịch sử;
+    :Gửi email xác nhận thành công;
+    :Hiển thị kết quả thành công;
+  endif
+endif
+stop
+@enduml

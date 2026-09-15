@@ -1,0 +1,51 @@
+@startuml
+skinparam componentStyle rectangle
+title Microservices Architecture — Phân hệ đóng học phí iBanking
+
+component [Web App\nReact (Vite)] as WEB #E8F5E9
+component [API Gateway\nSpring Cloud Gateway :8080] as GW #FFF9C4
+component [user-service :8081] as US #E3F2FD
+component [tuition-service :8082] as TS #E3F2FD
+component [payment-service :8083] as PS #FFE0B2
+component [otp-service :8084] as OS #E3F2FD
+component [notification-service :8085] as NS #E3F2FD
+component [MailHog\nSMTP (dev)] as MH #F3E5F5
+
+database "user_db" as UDB
+database "tuition_db" as TDB
+database "payment_db" as PDB
+database "otp_db" as ODB
+database "notification_db" as NDB
+database "Redis\n(TTL / idempotency)" as RED
+queue "RabbitMQ" as MQ
+
+' REST đồng bộ (mũi tên liền)
+WEB --> GW : REST /api/v1/*
+GW --> US : /auth, /users
+GW --> TS : /tuitions
+GW --> PS : /payments
+PS --> OS : POST /internal/otp/issue|verify
+PS --> TS : POST /internal/tuitions/claim|release
+PS --> US : POST /internal/accounts/debit
+
+' service ↔ database sở hữu
+US --> UDB
+TS --> TDB
+PS --> PDB
+OS --> ODB
+NS --> NDB
+US --> RED
+PS --> RED
+OS --> RED
+
+' bất đồng bộ (mũi tên đứt)
+OS ..> MQ : EmailRequested (OTP)
+PS ..> MQ : EmailRequested (success)\n[outbox relay]
+MQ ..> NS
+NS --> MH : SMTP
+
+legend right
+  | Mũi tên liền | REST đồng bộ / DB / SMTP |
+  | Mũi tên đứt | Event bất đồng bộ (RabbitMQ) |
+endlegend
+@enduml

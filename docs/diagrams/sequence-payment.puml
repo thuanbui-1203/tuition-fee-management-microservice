@@ -1,0 +1,69 @@
+@startuml
+title Sequence — Luồng thanh toán UC-04 (tạo giao dịch → OTP → confirm → saga)
+
+actor "Người dùng" as U
+participant "Web (React)" as WEB
+participant "API Gateway" as GW
+participant "payment-service" as PS
+participant "otp-service" as OS
+participant "tuition-service" as TS
+participant "user-service" as US
+queue "RabbitMQ" as MQ
+participant "notification-service" as NS
+participant "MailHog (SMTP)" as MH
+
+== 1. Tạo giao dịch + gửi OTP ==
+U -> WEB : nhập MSSV, bấm "Xác nhận giao dịch"
+WEB -> GW : POST /api/v1/payments {mssv}\n(Idempotency-Key)
+GW -> PS : forward
+PS -> TS : GET /internal/tuitions?mssv=...\n(kiểm tra fee UNPAID, lấy amount)
+TS --> PS : 200 {feeId, amount}
+PS -> PS : tạo Transaction (INITIATED)\nkiểm tra idempotency_key
+PS -> OS : POST /internal/otp/issue {transactionId, email}
+OS -> MQ : publish EmailRequested (OTP)
+MQ -> NS : consume
+NS -> MH : SMTP gửi OTP
+MH --> U : nhận email chứa OTP (hiệu lực 5 phút)
+PS --> WEB : 201 {paymentId, status=OTP_SENT}
+WEB --> U : hiển thị ô nhập OTP + đếm ngược 5:00
+
+== 2. Xác nhận OTP ==
+U -> WEB : nhập OTP, bấm "Xác nhận"
+WEB -> GW : POST /api/v1/payments/{id}/confirm {otp}\n(Idempotency-Key)
+GW -> PS : forward
+PS -> OS : POST /internal/otp/verify {transactionId, otp}
+alt OTP sai / hết hạn / đã dùng
+  OS --> PS : 400 / 409 / 410
+  PS --> WEB : 400/409/410 {code, message}
+  WEB --> U : thông báo lỗi tương ứng
+else OTP hợp lệ
+  OS --> PS : 200 valid
+  PS -> PS : status = OTP_VERIFIED
+
+  == 3. Saga (claim → debit → success) ==
+  PS -> TS : POST /internal/tuitions/claim {feeId, transactionId}
+  alt fee đã bị thanh toán (kịch bản §5.B)
+    TS --> PS : 409 FEE_ALREADY_PAID
+    PS -> PS : status = FAILED
+    PS --> WEB : 409 "Học phí đã được thanh toán"
+  else claim thành công
+    TS --> PS : 200
+    PS -> US : POST /internal/accounts/debit\n{accountId, amount, Idempotency-Key}
+    alt số dư không đủ (kịch bản §5.A)
+      US --> PS : 422 INSUFFICIENT_BALANCE
+      PS -> TS : POST /internal/tuitions/{feeId}/release\n(compensation)
+      TS --> PS : 200
+      PS -> PS : status = FAILED
+      PS --> WEB : 422 "Số dư không đủ"
+    else debit thành công
+      US --> PS : 200 {newBalance}
+      PS -> PS : status = SUCCESS\nghi outbox TransactionSucceeded
+      PS -> MQ : publish TransactionSucceeded (relay)
+      MQ -> NS : consume
+      NS -> MH : SMTP gửi email xác nhận
+      PS --> WEB : 200 {status=SUCCESS, newBalance, feeStatus=PAID}
+      WEB --> U : hiển thị kết quả thành công
+    end
+  end
+end
+@enduml

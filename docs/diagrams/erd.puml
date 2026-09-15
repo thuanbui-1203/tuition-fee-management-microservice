@@ -1,0 +1,104 @@
+@startuml
+title ERD — Phân hệ đóng học phí iBanking (logical, nhóm theo service sở hữu)
+skinparam linetype ortho
+hide empty members
+
+package "user-service" {
+  entity "users" as users {
+    * id : BIGINT <<PK>>
+    --
+    username : VARCHAR(50) <<UNIQUE>>
+    password_hash : VARCHAR(100)
+    full_name : VARCHAR(100)
+    phone : VARCHAR(20)
+    email : VARCHAR(100) <<UNIQUE>>
+    created_at : TIMESTAMP
+  }
+  entity "accounts" as accounts {
+    * id : BIGINT <<PK>>
+    --
+    user_id : BIGINT <<FK, UNIQUE>>
+    balance : DECIMAL(15,2) <<CHECK >= 0>>
+    version : INT
+    updated_at : TIMESTAMP
+  }
+}
+
+package "tuition-service" {
+  entity "students" as students {
+    * id : BIGINT <<PK>>
+    --
+    mssv : VARCHAR(20) <<UNIQUE>>
+    full_name : VARCHAR(100)
+    class_name : VARCHAR(50)
+    faculty : VARCHAR(100)
+  }
+  entity "tuition_fees" as tuition_fees {
+    * id : BIGINT <<PK>>
+    --
+    student_id : BIGINT <<FK>>
+    semester : VARCHAR(20)
+    amount : DECIMAL(15,2) <<CHECK > 0>>
+    status : VARCHAR(10) <<UNPAID|PAID>>
+    paid_transaction_id : UUID <<FK logic>>
+    updated_at : TIMESTAMP
+  }
+}
+
+package "payment-service" {
+  entity "transactions" as transactions {
+    * id : UUID <<PK>>
+    --
+    idempotency_key : VARCHAR(100) <<UNIQUE>>
+    payer_user_id : BIGINT <<FK logic>>
+    tuition_fee_id : BIGINT <<FK logic>>
+    amount : DECIMAL(15,2) <<CHECK > 0>>
+    status : VARCHAR(20) <<INITIATED..SUCCESS>>
+    created_at : TIMESTAMP
+    completed_at : TIMESTAMP
+  }
+  entity "outbox" as outbox {
+    * id : BIGINT <<PK>>
+    --
+    event_type : VARCHAR(50)
+    payload : JSONB
+    status : VARCHAR(10) <<PENDING|SENT>>
+    created_at : TIMESTAMP
+  }
+}
+
+package "otp-service" {
+  entity "otp_codes" as otp_codes {
+    * id : BIGINT <<PK>>
+    --
+    transaction_id : UUID <<FK logic>>
+    code_hash : VARCHAR(100)
+    expires_at : TIMESTAMP <<= now + 5 phút>>
+    status : VARCHAR(10) <<ACTIVE|VERIFIED|EXPIRED>>
+    attempts : INT
+    created_at : TIMESTAMP
+  }
+}
+
+package "notification-service" {
+  entity "email_logs" as email_logs {
+    * id : BIGINT <<PK>>
+    --
+    message_id : VARCHAR(100) <<UNIQUE>>
+    to_email : VARCHAR(100)
+    subject : VARCHAR(200)
+    status : VARCHAR(10) <<PENDING|SENT|FAILED>>
+    attempts : INT
+    last_error : TEXT
+  }
+}
+
+users ||--|| accounts : "1 – 1"
+users ||--o{ transactions : "1 – N (người nộp)"
+students ||--o{ tuition_fees : "1 – N"
+tuition_fees ||--o| transactions : "0..1 giao dịch SUCCESS\ncho 1 học phí (BR6)"
+transactions ||--o{ otp_codes : "1 – 0..N"
+
+note bottom of outbox : bảng kỹ thuật (outbox pattern)\nghi event TRONG CÙNG transaction DB
+note bottom of email_logs : dedupe event lặp bằng message_id
+@enduml

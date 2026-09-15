@@ -1,0 +1,40 @@
+@startuml
+left to right direction
+title Use Case Diagram — Phân hệ đóng học phí iBanking
+
+actor "Người dùng (User)" as U
+actor "Email system\n(Mail server)" as E
+
+rectangle "Phân hệ đóng học phí – iBanking" {
+  usecase "UC-01 Đăng nhập" as UC1
+  usecase "UC-02 Xem thông tin tài khoản" as UC2
+  usecase "UC-03 Tra cứu học phí theo MSSV" as UC3
+  usecase "UC-04 Thanh toán học phí" as UC4
+  usecase "UC-05 Xác thực giao dịch bằng OTP" as UC5
+  usecase "UC-06 Xem lịch sử giao dịch" as UC6
+  usecase "Nhập lại OTP\n(khi sai/hết hạn)" as UC7
+}
+
+UC4 ..> UC3 : <<include>>
+UC4 ..> UC5 : <<include>>
+UC7 ..> UC5 : <<extend>>\nOTP sai/hết hạn
+
+U --> UC1
+U --> UC2
+U --> UC3
+U --> UC4
+U --> UC6
+U --> UC7
+E --> UC5 : gửi/nhận email
+
+note bottom of UC4
+  BR1: chỉ thanh toán TOÀN BỘ khoản học phí
+  BR2: fee tồn tại + UNPAID + số dư ≥ số tiền
+end note
+
+note bottom of UC5
+  BR3: gắn với đúng 1 giao dịch
+  BR4: hết hạn tối đa 5 phút
+  BR5: chỉ dùng thành công 1 lần
+end note
+@enduml
