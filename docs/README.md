@@ -74,17 +74,18 @@ P0 Setup → P1 Phân tích (UCD + ERD) → P2 Kiến trúc + P3 REST API → P4
 5. **Bảo mật tối thiểu:** mật khẩu hash bcrypt; OTP chỉ lưu hash; JWT có hạn; không để lộ endpoint nội bộ qua gateway.
 6. **Mỗi service** có health check, OpenAPI/Swagger, log có `traceId` để dò lỗi xuyên service.
 
-## Cấu trúc thư mục dự kiến (Phase 0 sẽ tạo)
+## Cấu trúc thư mục (đã tạo)
 
 ```
 microservices/
-├── gateway/                  # Spring Cloud Gateway (port 8080)
-├── user-service/             # port 8081 — tài khoản, đăng nhập, ví/số dư
-├── tuition-service/          # port 8082 — sinh viên, học phí
-├── payment-service/          # port 8083 — điều phối giao dịch (saga)
-├── otp-service/              # port 8084 — OTP lifecycle
-├── notification-service/     # port 8085 — gửi email
-├── web/                      # React frontend (dev port 5173)
+├── backend/                  # toàn bộ service backend (Java Spring Boot)
+│   ├── gateway/              # Spring Cloud Gateway (port 8080)
+│   ├── user-service/         # port 8081 — tài khoản, đăng nhập, ví/số dư
+│   ├── tuition-service/      # port 8082 — sinh viên, học phí
+│   ├── payment-service/      # port 8083 — điều phối giao dịch (saga)
+│   ├── otp-service/          # port 8084 — OTP lifecycle
+│   └── notification-service/ # port 8085 — gửi email
+├── frontend/                 # React + Vite web app (dev port 5173)
 ├── docs/                     # tài liệu dự án (chính là thư mục này)
 ├── docker-compose.yml
 ├── .env.example
