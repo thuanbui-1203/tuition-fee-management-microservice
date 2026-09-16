@@ -94,9 +94,9 @@ package "notification-service" {
 }
 
 users ||--|| accounts : "1 – 1"
-users ||--o{ transactions : "1 – N (người nộp)"
+users ||--o{ transactions 
 students ||--o{ tuition_fees : "1 – N"
-tuition_fees ||--o| transactions : "0..1 giao dịch SUCCESS\ncho 1 học phí (BR6)"
+tuition_fees ||--o| transactions : "0..1 (BR6)"
 transactions ||--o{ otp_codes : "1 – 0..N"
 
 note bottom of outbox : bảng kỹ thuật (outbox pattern)\nghi event TRONG CÙNG transaction DB
