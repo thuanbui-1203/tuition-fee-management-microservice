@@ -99,10 +99,10 @@ public class OtpDatabaseIntegrationTests : IClassFixture<PostgresFixture>
     public async Task ConcurrentIssue_LeavesExactlyOneActiveOtp()
     {
         var txn = Guid.NewGuid();
-        var service = CreateService();
 
+        // Each concurrent request must use its own DbContext (a DbContext is not thread-safe).
         var results = await Task.WhenAll(Enumerable.Range(0, 4).Select(i =>
-            Task.Run(() => service.IssueAsync(txn, "a@example.com", $"key-{i}", null, CancellationToken.None))));
+            Task.Run(() => CreateService().IssueAsync(txn, "a@example.com", $"key-{txn}-{i}", null, CancellationToken.None))));
 
         results.All(r => r.IsSuccess).Should().BeTrue();
 
@@ -115,7 +115,7 @@ public class OtpDatabaseIntegrationTests : IClassFixture<PostgresFixture>
     public async Task Issue_CreatesOutboxWithEncryptablePayload()
     {
         var txn = Guid.NewGuid();
-        var result = await CreateService().IssueAsync(txn, "a@example.com", "key-1", "corr-1", CancellationToken.None);
+        var result = await CreateService().IssueAsync(txn, "a@example.com", $"outbox-{txn}", "corr-1", CancellationToken.None);
         result.IsSuccess.Should().BeTrue();
 
         using var db = new OtpDbContext(_options);

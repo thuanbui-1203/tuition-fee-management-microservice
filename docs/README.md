@@ -1,101 +1,126 @@
-# Kế hoạch chi tiết — Dự án giữa kỳ: Phân hệ đóng học phí của ứng dụng iBanking
+**Language:** **English** · [Tiếng Việt](README.vi.md)
 
-> Đề tài: **DỰ ÁN GIỮA KỲ — PHÂN HỆ ĐÓNG HỌC PHÍ CỦA ỨNG DỤNG iBanking** (TDTU).
-> Nội dung đề bài được trích xuất từ ảnh chụp đề (đã OCR, xem `.reasonix/ocr_text/`).
+# iBanking — Tuition Payment Subsystem · Project Documentation
 
-## Mục đích tài liệu
+> Topic: **MIDTERM PROJECT — TUITION PAYMENT SUBSYSTEM OF THE iBanking APP** (TDTU).
+> The assignment statement was extracted from a photo of the brief (OCR; see `.reasonix/ocr_text/`).
 
-Bộ tài liệu này là **kế hoạch thực hiện từng bước** cho toàn bộ dự án, được chia theo **9 pha** (Phase). Mỗi pha là một file `.md` riêng, mô tả: mục tiêu, đầu vào, các bước làm cụ thể, sản phẩm bàn giao (deliverable) và tiêu chí chấp nhận (acceptance criteria).
+## Purpose of this folder
 
-**Trạng thái:** kế hoạch — **chưa viết code ứng dụng**. Các đoạn `SQL`, `JSON`, `yaml` trong tài liệu chỉ là **mẫu thiết kế** để thực hiện ở giai đoạn sau.
+The `docs/` folder holds the project documentation in **two groups**:
 
-## Danh sách các pha và file tương ứng
+1. **Implementation plan** — the original step-by-step plan split into **9 phases** (Phase 0–9). Each phase is its own `.md` file describing the goal, inputs, concrete steps, deliverables and acceptance criteria.
+2. **Implementation reference** — the current **.NET 10** implementation of three microservices (`tuition-service`, `otp-service`, `notification-service`).
 
-| # | Phase | File | Nội dung chính |
-|---|---|---|---|
-| 0 | Thiết lập dự án | `00-project-setup.md` | Git, cấu trúc thư mục, Docker Compose, khởi tạo các Spring Boot service, cấu hình chung |
-| 1 | Phân tích nghiệp vụ & dữ liệu | `01-analysis-use-case-erd.md` | Use Case Diagram (các bước + đặc tả UC-04) và ERD (các bước + bảng thiết kế) |
-| 2 | Kiến trúc Microservices | `02-microservices-architecture.md` | Phân rã service, trách nhiệm từng service, 2 phần giao tiếp (REST đồng bộ + messaging bất đồng bộ), sơ đồ kiến trúc |
-| 3 | Thiết kế REST API | `03-rest-api-design.md` | Toàn bộ endpoint: URI, HTTP method, Input/Request, Output/Response, HTTP Status Code |
-| 4 | Thiết kế & hiện thực CSDL | `04-database-design.md` | Schema từng service, ràng buộc nghiệp vụ, seed data, SQL và/hoặc NoSQL |
-| 5 | Lập trình services & API | `05-backend-services.md` | Thứ tự xây dựng từng service, chi tiết công việc, test cần viết |
-| 6 | Transaction & concurrency | `06-transaction-concurrency.md` | 2 kịch bản đồng thời, cơ chế đảm bảo nhất quán, saga, idempotency, outbox |
-| 7 | Giao diện Web | `07-frontend-web.md` | Từng màn hình, hành vi, luồng gọi API, ánh xạ lỗi |
-| 8 | Kiểm thử tổng thể | `08-testing.md` | Unit / Integration / API / E2E, test cho 2 kịch bản concurrency |
-| 9 | Tài liệu & demo | `09-documentation-demo.md` | README, báo cáo theo 8 yêu cầu đề, kịch bản demo |
+**Status:** three services are implemented in **.NET 10** (tuition, otp, notification); `payment-service`, `user-service`, `gateway` and the frontend are still at the planning stage.
 
-## Công nghệ giả định (mặc định — có thể đổi theo yêu cầu môn học)
+## Implementation reference (current)
 
-| Thành phần | Lựa chọn mặc định | Ghi chú |
-|---|---|---|
-| Backend | Java 17 + Spring Boot 3.x | Spring Web, Data JPA, Security, Validation, Flyway, springdoc-openapi |
-| Cơ sở dữ liệu | PostgreSQL | Một database logic cho mỗi service (cùng 1 instance cho dự án SV) |
-| Cache / TTL | Redis | OTP expiry, idempotency key, lock/rate-limit hỗ trợ |
-| Message broker | RabbitMQ | Gửi email bất đồng bộ (outbox pattern) |
-| API Gateway | Spring Cloud Gateway | Cổng vào duy nhất, kiểm tra JWT, routing |
-| Frontend | React + Vite | Có thể thay bằng HTML/JS thuần nếu muốn đơn giản |
-| Email (dev) | MailHog | Bắt email cục bộ: SMTP 1025, UI http://localhost:8025 |
-| Build / chạy | Maven + Docker Compose | `docker compose up` khởi động toàn bộ |
-
-> Nếu môn học yêu cầu stack khác (Node.js, .NET, MySQL, Kafka…), **chỉ phần công cụ** trong các pha thay đổi; các bước phân tích/thiết kế (Pha 1–3, 6) giữ nguyên.
-
-## Bản đồ 8 yêu cầu của đề bài → Phase
-
-| Yêu cầu đề bài | Phase thực hiện |
+| Doc | Contents |
 |---|---|
-| 1. Phân tích nghiệp vụ & dữ liệu (Use Case Diagram, ERD) | Phase 1 |
-| 2. Kiến trúc Microservices + cách giao tiếp giữa các service | Phase 2 |
+| [`architecture.md`](architecture.md) | Service responsibilities, sync/async communication, saga, outbox, concurrency strategy |
+| [`database.md`](database.md) | Per-service schemas, constraints, indexes, migrations |
+| [`api.md`](api.md) | Public + internal endpoints, request/response, error codes |
+| [`security.md`](security.md) | OTP handling, hashing vs encryption, secrets, TLS, rate limiting |
+| [`error-handling.md`](error-handling.md) | Unified error body and error-code table |
+| [`testing.md`](testing.md) | Unit / integration / concurrency test strategy and commands |
+| [`troubleshooting.md`](troubleshooting.md) | Common failures and how to fix them |
+| [`deployment.md`](deployment.md) | Production configuration, migrations, TLS, key rotation |
+
+Root-level entry point: [`../README.md`](../README.md).
+
+## Implementation plan (Phases 0–9)
+
+| # | Phase | File | Main content |
+|---|---|---|---|
+| 0 | Project setup | `00-project-setup.md` | Git, folder structure, Docker Compose, service scaffolding, shared config |
+| 1 | Business & data analysis | `01-analysis-use-case-erd.md` | Use Case Diagram (+ UC-04 spec) and ERD |
+| 2 | Microservices architecture | `02-microservices-architecture.md` | Service decomposition, responsibilities, the two communication styles (sync REST + async messaging), architecture diagram |
+| 3 | REST API design | `03-rest-api-design.md` | Every endpoint: URI, HTTP method, request, response, status codes |
+| 4 | Database design & implementation | `04-database-design.md` | Per-service schema, business constraints, seed data, SQL and/or NoSQL |
+| 5 | Service & API implementation | `05-backend-services.md` | Build order per service, tasks, required tests |
+| 6 | Transaction & concurrency | `06-transaction-concurrency.md` | The two concurrency scenarios, consistency mechanisms, saga, idempotency, outbox |
+| 7 | Web UI | `07-frontend-web.md` | Screens, behaviour, API flows, error mapping |
+| 8 | Overall testing | `08-testing.md` | Unit / integration / API / E2E, concurrency-scenario tests |
+| 9 | Documentation & demo | `09-documentation-demo.md` | README, report against the 8 requirements, demo script |
+
+(Additional plan files: `10-teamwork-plan.md`, `11-teamwork-6days.md`, `12-teamwork-6days-summary.md`.)
+
+## Technology
+
+| Component | Choice | Notes |
+|---|---|---|
+| Backend | **.NET 10** (ASP.NET Core, EF Core 10) | Migrated from the original Java 17 + Spring Boot 3.x plan |
+| Database | PostgreSQL | One logical database per service |
+| Cache / TTL | Redis (optional) | OTP TTL is enforced in PostgreSQL; Redis is an optional extra for rate limiting |
+| Message broker | RabbitMQ | Asynchronous email (outbox pattern) |
+| Email (dev) | MailHog | Local SMTP catcher: SMTP 1025, UI http://localhost:8025 |
+| Build / run | .NET SDK + Docker Compose | `docker compose up` starts the infrastructure |
+
+> Compared with the original plan, only the **tooling** changed; the analysis/design phases (1–3, 6) are unchanged.
+
+## 8 assignment requirements → phase
+
+| Requirement | Phase |
+|---|---|
+| 1. Business & data analysis (Use Case Diagram, ERD) | Phase 1 |
+| 2. Microservices architecture + inter-service communication | Phase 2 |
 | 3. REST API (URI, method, request, response, status code) | Phase 3 |
-| 4. CSDL bằng SQL và/hoặc NoSQL | Phase 4 |
-| 5. Lập trình service & API đủ luồng nghiệp vụ | Phase 5 |
-| 6. Transaction & concurrency, tính nhất quán | Phase 6 |
-| 7. Giao diện Web tích hợp API | Phase 7 (+ 8) |
-| 8. Tài liệu & demo | Phase 9 (+ 0) |
+| 4. Database in SQL and/or NoSQL | Phase 4 |
+| 5. Service & API implementation covering the business flow | Phase 5 |
+| 6. Transaction & concurrency, consistency | Phase 6 |
+| 7. Web UI integrated with the API | Phase 7 (+ 8) |
+| 8. Documentation & demo | Phase 9 (+ 0) |
 
-## Thứ tự thực hiện và phụ thuộc
+## Execution order & dependencies
 
 ```
-P0 Setup → P1 Phân tích (UCD + ERD) → P2 Kiến trúc + P3 REST API → P4 CSDL
+P0 Setup → P1 Analysis (UCD + ERD) → P2 Architecture + P3 REST API → P4 Database
         → P5 Backend (user → tuition → otp → notification → payment → gateway)
-        → P6 Transaction & concurrency → P7 Frontend → P8 Kiểm thử → P9 Tài liệu & demo
+        → P6 Transaction & concurrency → P7 Frontend → P8 Testing → P9 Docs & demo
 ```
 
-**Quy tắc phụ thuộc quan trọng:**
-- Không bắt đầu `payment-service` (Phase 5.5) trước khi `user-service`, `tuition-service`, `otp-service` hoàn tất và có test.
-- Không kết luận Phase 6 hoàn thành khi 2 test concurrency (Kịch bản A & B) chưa **chạy và đạt**.
-- Mỗi phase phải đạt acceptance criteria của chính nó trước khi chuyển phase kế tiếp.
+**Key dependency rules:**
 
-## Quy ước chung xuyên suốt dự án
+- Do not start `payment-service` (Phase 5.5) before `user-service`, `tuition-service` and `otp-service` are complete and tested.
+- Do not consider Phase 6 done until the two concurrency tests (Scenario A & B) run and pass.
+- Each phase must meet its own acceptance criteria before moving on.
 
-1. **Mỗi service sở hữu dữ liệu riêng** — không dùng chung bảng giữa các service; giao tiếp chỉ qua API/event.
-2. **Đặt tên:** REST theo số nhiều (`/payments`, `/users/me`); event theo thì quá khứ (`TransactionSucceeded`); biến/endpoint dạng `lowerCamelCase`/`kebab-case`.
-3. **Lỗi thống nhất:** mọi response lỗi có dạng `{ "code", "message", "timestamp", "traceId" }` (xem `03-rest-api-design.md`).
-4. **Đơn vị tiền:** lưu số nguyên (VND, không lưu số thập phân float) hoặc `DECIMAL(15,2)`; không bao giờ dùng `double` cho tiền.
-5. **Bảo mật tối thiểu:** mật khẩu hash bcrypt; OTP chỉ lưu hash; JWT có hạn; không để lộ endpoint nội bộ qua gateway.
-6. **Mỗi service** có health check, OpenAPI/Swagger, log có `traceId` để dò lỗi xuyên service.
+## Project-wide conventions
 
-## Cấu trúc thư mục (đã tạo)
+1. **Each service owns its data** — no shared tables; communicate only via API/event.
+2. **Naming:** REST uses plurals (`/payments`, `/users/me`); events use past tense (`TransactionSucceeded`); variables/endpoints use `lowerCamelCase`/`kebab-case`.
+3. **Unified errors:** every error response is `{ "code", "message", "timestamp", "traceId" }`.
+4. **Money:** store as integer (VND) or `DECIMAL(15,2)`; never `double`.
+5. **Minimum security:** hash passwords (bcrypt); store only OTP hashes; time-limited JWTs; never expose internal endpoints through the gateway.
+6. **Every service** has health checks, OpenAPI/Swagger, and logs with `traceId`.
+
+## Repository structure
 
 ```
 microservices/
-├── backend/                  # toàn bộ service backend (Java Spring Boot)
-│   ├── gateway/              # Spring Cloud Gateway (port 8080)
-│   ├── user-service/         # port 8081 — tài khoản, đăng nhập, ví/số dư
-│   ├── tuition-service/      # port 8082 — sinh viên, học phí
-│   ├── payment-service/      # port 8083 — điều phối giao dịch (saga)
-│   ├── otp-service/          # port 8084 — OTP lifecycle
-│   └── notification-service/ # port 8085 — gửi email
-├── frontend/                 # React + Vite web app (dev port 5173)
-├── docs/                     # tài liệu dự án (chính là thư mục này)
+├── backend/                      # .NET 10 services
+│   ├── Common/                   # shared cross-cutting library (Microservices.Common)
+│   ├── tuition-service/          # port 8082 — students, tuition fees
+│   ├── otp-service/              # port 8084 — OTP lifecycle, outbox
+│   ├── notification-service/     # port 8085 — email
+│   ├── payment-service/          # (planned) saga orchestrator
+│   ├── user-service/             # (planned) accounts, login, balance
+│   ├── gateway/                  # (planned) API gateway
+│   ├── tests/                    # unit + integration test projects
+│   └── Microservices.sln
+├── frontend/                     # React + Vite (planned)
+├── docs/                         # project documentation (this folder)
 ├── docker-compose.yml
 ├── .env.example
-└── README.md
+├── README.md                     # root readme (English, default)
+└── README.vi.md                  # root readme (Vietnamese)
 ```
 
-## Nguồn dữ liệu đề bài (tóm tắt nghiệp vụ — nền tảng cho mọi phase)
+## Assignment business summary (basis for every phase)
 
-1. Người dùng đăng nhập bằng `username`/`password`; hệ thống quản lý: họ tên, SĐT, email, số dư khả dụng, lịch sử giao dịch.
-2. Màn hình thanh toán gồm 3 nhóm thông tin: người nộp tiền (tự động, không sửa), thông tin học phí (tra theo MSSV), thông tin thanh toán (số dư + số tiền). Chỉ thanh toán **toàn bộ** khoản học phí; giao dịch hợp lệ khi học phí tồn tại, chưa thanh toán và số dư ≥ số tiền.
-3. Xác thực bằng **OTP gửi email**: gắn với đúng 1 giao dịch, hết hạn **tối đa 5 phút**, dùng thành công **1 lần**.
-4. Sau khi OTP hợp lệ: kiểm tra lại → trừ tiền → cập nhật học phí đã thanh toán → lưu lịch sử → gửi email xác nhận → hiển thị kết quả.
-5. Tính nhất quán khi xử lý đồng thời: (A) nhiều giao dịch cùng tài khoản → không chi vượt số dư; (B) nhiều người thanh toán cùng một học phí (MSSV) → chỉ thanh toán thành công 1 lần.
+1. Users sign in with `username`/`password`; the system tracks full name, phone, email, available balance and transaction history.
+2. The payment screen has three groups: payer (auto-filled, read-only), tuition info (looked up by MSSV), and payment info (balance + amount). Only the **entire** tuition fee can be paid; a payment is valid when the fee exists, is unpaid, and balance ≥ amount.
+3. Verification uses an **email OTP** bound to exactly one transaction, expiring in **at most 5 minutes**, and usable **once**.
+4. After a valid OTP: re-check → debit → mark the fee paid → save history → send a confirmation email → show the result.
+5. Concurrency consistency: (A) many transactions on one account → never overspend; (B) several people paying the same fee (MSSV) → exactly one succeeds.

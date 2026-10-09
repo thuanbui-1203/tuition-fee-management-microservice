@@ -38,9 +38,11 @@ public sealed class OtpRepository : IOtpRepository
         try
         {
             // Serialize concurrent issuances for the same transaction.
+            // Note: pass parameters as IEnumerable<object> so the CancellationToken binds to the
+            // overload's token parameter — otherwise it is interpreted as a SQL parameter.
             await _db.Database.ExecuteSqlRawAsync(
                 "SELECT pg_advisory_xact_lock(hashtextextended({0}, 0))",
-                command.TransactionId.ToString("D"),
+                new object[] { command.TransactionId.ToString("D") },
                 cancellationToken);
 
             if (idempotencyKey is not null)

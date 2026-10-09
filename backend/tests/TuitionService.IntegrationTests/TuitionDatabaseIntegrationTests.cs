@@ -153,16 +153,18 @@ public class TuitionDatabaseIntegrationTests : IClassFixture<PostgresFixture>
     [Fact]
     public async Task Lookup_ReturnsUnpaidFee_AndAlreadyPaidAfterClaim()
     {
-        var feeId = SeedUnpaidFee("521H0001");
+        // Use an MSSV that is not present in the SeedDemoData migration (which seeds 521H0001..3).
+        var mssv = $"LKP{Guid.NewGuid():N}"[..10];
+        var feeId = SeedUnpaidFee(mssv);
         var service = CreateService();
 
-        var lookup = await service.LookupAsync("521H0001", CancellationToken.None);
+        var lookup = await service.LookupAsync(mssv, CancellationToken.None);
         lookup.IsSuccess.Should().BeTrue();
         lookup.Value.Fee.FeeId.Should().Be(feeId);
 
         await service.ClaimAsync(feeId, Guid.NewGuid(), CancellationToken.None);
 
-        var after = await CreateService().LookupAsync("521H0001", CancellationToken.None);
+        var after = await CreateService().LookupAsync(mssv, CancellationToken.None);
         after.Error.Code.Should().Be(Microservices.Common.Errors.ErrorCodes.FeeAlreadyPaid);
     }
 }
