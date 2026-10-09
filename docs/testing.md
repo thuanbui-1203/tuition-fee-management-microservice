@@ -1,3 +1,5 @@
+**Language:** **English** · [Tiếng Việt](testing.vi.md)
+
 # Testing
 
 Two layers, matching the original project's separation: **unit tests** (no infrastructure) and **integration tests** (real PostgreSQL/RabbitMQ via Testcontainers).

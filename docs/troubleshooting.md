@@ -1,3 +1,5 @@
+**Language:** **English** · [Tiếng Việt](troubleshooting.vi.md)
+
 # Troubleshooting
 
 ## PostgreSQL unavailable

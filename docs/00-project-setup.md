@@ -1,37 +1,39 @@
-# Phase 0 — Thiết lập dự án (Project Setup)
+**Language:** **English** · [Tiếng Việt](00-project-setup.vi.md)
 
-**Mục tiêu:** tạo một khung dự án (skeleton) chạy được bằng **một lệnh duy nhất**, để mọi phase sau có môi trường kiểm thử ổn định.
+# Phase 0 — Project Setup
 
-**Đầu vào:** đề bài (đã OCR), công nghệ giả định ở `README.md`.
+**Goal:** create a project skeleton that runs with a **single command**, so every later phase has a stable test environment.
 
-**Sản phẩm bàn giao:** repo Git, `docker-compose.yml`, 6 project backend + 1 frontend tối thiểu, cấu hình chung, health check.
+**Input:** the assignment brief and the assumed technology in `README.md`.
+
+**Deliverables:** a Git repo, `docker-compose.yml`, 6 backend projects + 1 minimal frontend, shared configuration, health checks.
 
 ---
 
-## Bước 0.1 — Khởi tạo Git và cấu trúc thư mục
+## Step 0.1 — Initialise Git and the folder structure
 
-**Việc cần làm:**
-1. `git init` tại thư mục gốc dự án.
-2. Tạo `.gitignore` gồm:
+**Tasks:**
+1. `git init` in the project root.
+2. Create a `.gitignore` covering:
    - Java/Maven: `target/`, `*.class`, `.mvn/wrapper/maven-wrapper.jar`
    - Node: `node_modules/`, `dist/`, `.vite/`
-   - Môi trường: `.env`, `*.local`
+   - Environment: `.env`, `*.local`
    - IDE/OS: `.idea/`, `.vscode/`, `*.iml`, `.DS_Store`, `Thumbs.db`
-3. Tạo cây thư mục (xem `README.md`) — đủ 6 thư mục service, `gateway/`, `web/`, `docs/`.
-4. Tạo `README.md` gốc (tóm tắt cách chạy — sẽ hoàn thiện ở Phase 9).
+3. Create the folder tree (see `README.md`) — 6 service folders plus `gateway/`, `web/`, `docs/`.
+4. Create the root `README.md` (a summary of how to run — finalised in Phase 9).
 
-## Bước 0.2 — Viết `docker-compose.yml` (hạ tầng)
+## Step 0.2 — Write `docker-compose.yml` (infrastructure)
 
-**Việc cần làm:** định nghĩa các container hạ tầng (chưa cần container cho service — service chạy bằng Maven khi dev):
+**Tasks:** define the infrastructure containers (no service containers yet — services run via Maven during development):
 
-| Container | Image | Cổng (host:container) | Credential dev | Dùng cho |
+| Container | Image | Ports (host:container) | Dev credentials | Used for |
 |---|---|---|---|---|
-| `postgres` | `postgres:16-alpine` | `5432:5432` | user `postgres` / pass `postgres` | Tạo 5 database: `user_db`, `tuition_db`, `payment_db`, `otp_db`, `notification_db` |
-| `redis` | `redis:7-alpine` | `6379:6379` | — | OTP TTL, idempotency key, rate limit |
-| `rabbitmq` | `rabbitmq:3-management` | `5672:5672`, `15672:15672` | user `guest` / pass `guest` (mặc định) | Hàng đợi email |
-| `mailhog` | `mailhog/mailhog` | `1025:1025` (SMTP), `8025:8025` (UI) | — | Bắt email trong lúc phát triển |
+| `postgres` | `postgres:16-alpine` | `5432:5432` | user `postgres` / pass `postgres` | Creates 5 databases: `user_db`, `tuition_db`, `payment_db`, `otp_db`, `notification_db` |
+| `redis` | `redis:7-alpine` | `6379:6379` | — | OTP TTL, idempotency keys, rate limiting |
+| `rabbitmq` | `rabbitmq:3-management` | `5672:5672`, `15672:15672` | user `guest` / pass `guest` (default) | Email queue |
+| `mailhog` | `mailhog/mailhog` | `1025:1025` (SMTP), `8025:8025` (UI) | — | Captures email during development |
 
-**Mẫu** (chỉ là template — sẽ chỉnh ở Phase 4 khi có migration):
+**Template** (a starting point — refined in Phase 4 once migrations exist):
 ```yaml
 services:
   postgres:
@@ -54,36 +56,36 @@ volumes:
   pgdata:
 ```
 
-**Lưu ý quan trọng:** database cho 5 service nên tạo bằng lệnh trong `init` script của Postgres (mount thư mục `./docker/initdb/*.sql`) hoặc để **Flyway của từng service tự tạo schema** — chọn 1 cách và ghi rõ vào README. Gợi ý: mỗi service kết nối tới database riêng của nó, Flyway chạy migration khi service khởi động.
+**Important note:** create the databases for the 5 services with an `init` script (mount `./docker/initdb/*.sql`) **or** let each service's migration tool create its own schema — pick one approach and document it in the README. Suggestion: each service connects to its own database and runs migrations on startup.
 
-**Kiểm tra:** `docker compose up -d` → cả 4 container ở trạng thái healthy:
+**Check:** `docker compose up -d` → all 4 containers healthy:
 ```bash
 docker compose ps
 ```
 
-## Bước 0.3 — Khởi tạo các Spring Boot project
+## Step 0.3 — Scaffold the backend services
 
-**Việc cần làm:** với mỗi service (trừ gateway), tạo project Spring Boot 3.x, Java 17, packaging `jar`, group `edu.tdtu`:
+**Tasks:** for each service (except the gateway), create a backend project with `jar` packaging and group `edu.tdtu`:
 
-| Service | Artifact | Port | Dependencies bắt buộc |
+| Service | Artifact | Port | Required dependencies |
 |---|---|---|---|
-| user-service | `user-service` | 8081 | Web, Security, Data JPA, Validation, PostgreSQL, Flyway, Actuator, springdoc, AMQP (nếu cần publish) |
-| tuition-service | `tuition-service` | 8082 | Web, Data JPA, Validation, PostgreSQL, Flyway, Actuator, springdoc |
-| payment-service | `payment-service` | 8083 | Web, Data JPA, Validation, PostgreSQL, Flyway, Actuator, springdoc, AMQP, WebClient (gọi service khác) |
-| otp-service | `otp-service` | 8084 | Web, Data JPA, Validation, PostgreSQL, Flyway, Actuator, springdoc, AMQP, (Spring Data Redis — tuỳ chọn) |
-| notification-service | `notification-service` | 8085 | Web, Data JPA, Validation, PostgreSQL, Flyway, Actuator, AMQP, Spring Mail |
+| user-service | `user-service` | 8081 | Web, Security, Data JPA, Validation, PostgreSQL, Migration, Actuator, OpenAPI docs, AMQP (if it publishes) |
+| tuition-service | `tuition-service` | 8082 | Web, Data JPA, Validation, PostgreSQL, Migration, Actuator, OpenAPI docs |
+| payment-service | `payment-service` | 8083 | Web, Data JPA, Validation, PostgreSQL, Migration, Actuator, OpenAPI docs, AMQP, HTTP client (calls other services) |
+| otp-service | `otp-service` | 8084 | Web, Data JPA, Validation, PostgreSQL, Migration, Actuator, OpenAPI docs, AMQP, (optional Redis) |
+| notification-service | `notification-service` | 8085 | Web, Data JPA, Validation, PostgreSQL, Migration, Actuator, AMQP, Mail |
 | gateway | `gateway` | 8080 | Gateway, Security (Reactive), Actuator |
 
-**Lưu ý:**
-- `payment-service` gọi service khác qua `WebClient` (không dùng RestTemplate deprecated).
-- `gateway` dùng **WebFlux/Reactive**, không dùng Spring MVC.
-- Có thể tạo project bằng [start.spring.io](https://start.spring.io) hoặc Spring Initializr trong IDE.
+**Notes:**
+- `payment-service` calls other services over an HTTP client (not the deprecated `RestTemplate`).
+- `gateway` uses a **reactive** stack, not the MVC stack.
+- You can scaffold each project with the framework's project generator or your IDE's initializer.
 
-## Bước 0.4 — Cấu hình chung từng service (`application.yml`)
+## Step 0.4 — Shared per-service configuration (`application.yml`)
 
-**Việc cần làm:** mỗi service có `application.yml` với đúng:
-1. **Port** riêng theo bảng trên.
-2. **Datasource** trỏ đúng database của nó, ví dụ user-service:
+**Tasks:** each service gets an `application.yml` with:
+1. Its own **port**, per the table above.
+2. A **datasource** pointing at its own database, e.g. user-service:
 ```yaml
 spring:
   datasource:
@@ -91,48 +93,48 @@ spring:
     username: postgres
     password: postgres
   jpa:
-    hibernate.ddl-auto: validate   # schema do Flyway quản lý
+    hibernate.ddl-auto: validate   # schema is managed by migrations
     open-in-view: false
   flyway:
     enabled: true
     locations: classpath:db/migration
 ```
-3. **JWT:** dùng chung một secret (dev) hoặc cặp RSA. Cấu hình: `app.jwt.secret`, `app.jwt.expiration-ms` (gợi ý 30 phút). `user-service` **phát** token; `gateway` **xác thực** token.
-4. **RabbitMQ** (service nào cần): `spring.rabbitmq.host=localhost`, port 5672; khai báo queue/exchange trong code (xem Phase 2).
-5. **springdoc:** bật `/swagger-ui` cho từng service dev.
-6. **Logging pattern** kèm `traceId` (MDC) — thiết lập sau khi có gateway truyền header `X-Trace-Id`.
+3. **JWT:** share one secret (dev) or an RSA key pair. Config: `app.jwt.secret`, `app.jwt.expiration-ms` (suggested 30 minutes). `user-service` **issues** tokens; `gateway` **verifies** them.
+4. **RabbitMQ** (for services that need it): host `localhost`, port 5672; declare queues/exchanges in code (see Phase 2).
+5. **OpenAPI docs:** enable the Swagger UI for each service in dev.
+6. **Logging pattern** including `traceId` (MDC) — set up once the gateway forwards an `X-Trace-Id` header.
 
-**Kiểm tra:** `mvn spring-boot:run` từng service (theo thứ tự bất kỳ, chưa cần nhau) → log "Started ... in x seconds", không lỗi kết nối DB.
+**Check:** run each service; the log prints "Started … in x seconds" with no DB connection errors.
 
-## Bước 0.5 — Health check & endpoint `ping`
+## Step 0.5 — Health check & `ping` endpoint
 
-**Việc cần làm:** mỗi service trả về:
-- `GET /actuator/health` → `{"status":"UP"}` (kèm health của DB, RabbitMQ nếu có).
-- `GET /api/v1/ping` → `{"service":"user-service","status":"ok","time":"..."}` (dùng để demo & test gateway routing).
+**Tasks:** each service returns:
+- `GET /actuator/health` → `{"status":"UP"}` (including DB and, where present, RabbitMQ health).
+- `GET /api/v1/ping` → `{"service":"user-service","status":"ok","time":"..."}` (used for demo and gateway-routing tests).
 
-**Kiểm tra:**
+**Check:**
 ```bash
 curl http://localhost:8081/api/v1/ping
-curl http://localhost:8080/actuator/health   # sau khi có gateway
+curl http://localhost:8080/actuator/health   # once the gateway exists
 ```
 
-## Bước 0.6 — Biến môi trường & khởi tạo frontend (tối thiểu)
+## Step 0.6 — Environment variables & minimal frontend
 
-**Việc cần làm:**
-1. Tạo `.env.example` liệt kê: DB credentials, JWT secret, RabbitMQ, cổng.
-2. Frontend (Phase 7 mới làm đầy đủ): tạo `web/` bằng Vite + React, cấu hình proxy `/api` → `http://localhost:8080` để tránh CORS khi dev.
-3. Commit lần đầu với message chuẩn, ví dụ: `chore: scaffold monorepo with docker-compose and spring boot services`.
+**Tasks:**
+1. Create `.env.example` listing: DB credentials, JWT secret, RabbitMQ, ports.
+2. Frontend (fully built in Phase 7): create `web/` with a Vite + React app, proxying `/api` → `http://localhost:8080` to avoid CORS during development.
+3. Make the first commit with a conventional message, e.g. `chore: scaffold monorepo with docker-compose and backend services`.
 
 ---
 
-## Checklist hoàn thành Phase 0
+## Phase 0 completion checklist
 
-- [ ] `git init` + `.gitignore` + cấu trúc thư mục đúng
-- [ ] `docker compose up -d` → 4 container healthy
-- [ ] 6 backend project khởi tạo đúng dependency/port
-- [ ] Mỗi service chạy được `mvn spring-boot:run`, health OK
-- [ ] `user_db`…`notification_db` tồn tại (hoặc cơ chế tạo tự động rõ ràng)
-- [ ] JWT secret chung đã cấu hình
-- [ ] `.env.example`, README gốc, commit đầu tiên
+- [ ] `git init` + `.gitignore` + correct folder structure
+- [ ] `docker compose up -d` → 4 healthy containers
+- [ ] 6 backend projects scaffolded with the right dependencies/ports
+- [ ] Each service runs, health OK
+- [ ] `user_db` … `notification_db` exist (or an explicit auto-create mechanism)
+- [ ] Shared JWT secret configured
+- [ ] `.env.example`, root README, first commit
 
-**Acceptance criteria (tiêu chí chấp nhận):** chạy đúng 1 lệnh `docker compose up -d`, sau đó khởi động từng service bằng Maven; tất cả trả `200` tại `/actuator/health`; không có service nào ném lỗi kết nối khi khởi động.
+**Acceptance criteria:** a single `docker compose up -d`, then start each service; all return `200` at `/actuator/health`; no service throws a connection error on startup.

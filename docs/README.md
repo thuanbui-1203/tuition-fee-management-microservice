@@ -3,7 +3,6 @@
 # iBanking — Tuition Payment Subsystem · Project Documentation
 
 > Topic: **MIDTERM PROJECT — TUITION PAYMENT SUBSYSTEM OF THE iBanking APP** (TDTU).
-> The assignment statement was extracted from a photo of the brief (OCR; see `.reasonix/ocr_text/`).
 
 ## Purpose of this folder
 

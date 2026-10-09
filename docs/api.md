@@ -1,3 +1,5 @@
+**Language:** **English** · [Tiếng Việt](api.vi.md)
+
 # API reference
 
 All endpoints return JSON. Errors use the unified body described in [`error-handling.md`](error-handling.md). Public APIs are under `/api/v1`; internal APIs are under `/internal` and require the `X-Internal-Api-Key` header.

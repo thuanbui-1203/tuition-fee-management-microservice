@@ -1,3 +1,5 @@
+**Language:** **English** · [Tiếng Việt](database.vi.md)
+
 # Database design
 
 Three PostgreSQL databases, one per service. All timestamps are `timestamptz` (stored in UTC via `DateTimeOffset`). Money is stored as `numeric(15,2)` (never floating point). Column/table names are snake_case via `EFCore.NamingConventions`.
