@@ -1,7 +1,6 @@
 # Kế hoạch chi tiết — Dự án giữa kỳ: Phân hệ đóng học phí của ứng dụng iBanking
 
 > Đề tài: **DỰ ÁN GIỮA KỲ — PHÂN HỆ ĐÓNG HỌC PHÍ CỦA ỨNG DỤNG iBanking** (TDTU).
-> Nội dung đề bài được trích xuất từ ảnh chụp đề (đã OCR, xem `.reasonix/ocr_text/`).
 
 ## Mục đích tài liệu
 
