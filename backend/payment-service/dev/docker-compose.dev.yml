@@ -1,0 +1,58 @@
+# Hạ tầng + stub để test payment-service ĐỘC LẬP trên Postman
+# khi user/tuition/otp-service (A/B) chưa sẵn sàng.
+#   docker compose -f dev/docker-compose.dev.yml up -d
+# Gồm: Postgres (payment_db), RabbitMQ, MailHog, 3 WireMock stub.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${PAYMENT_DB_NAME:-payment_db}
+    ports: ['5432:5432']
+    volumes: ['pgdata_dev:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports: ['5672:5672', '15672:15672']
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog
+    ports: ['1025:1025', '8025:8025']
+
+  # --- Stub cho user-service (port 8081) ---
+  user-stub:
+    image: wiremock/wiremock:3.9.1
+    ports: ['8081:8080']
+    command: ['--global-response-templating', '--verbose']
+    volumes:
+      - ./wiremock/user:/home/wiremock
+
+  # --- Stub cho tuition-service (port 8082) ---
+  tuition-stub:
+    image: wiremock/wiremock:3.9.1
+    ports: ['8082:8080']
+    command: ['--global-response-templating', '--verbose']
+    volumes:
+      - ./wiremock/tuition:/home/wiremock
+
+  # --- Stub cho otp-service (port 8084) ---
+  otp-stub:
+    image: wiremock/wiremock:3.9.1
+    ports: ['8084:8080']
+    command: ['--global-response-templating', '--verbose']
+    volumes:
+      - ./wiremock/otp:/home/wiremock
+
+volumes:
+  pgdata_dev:

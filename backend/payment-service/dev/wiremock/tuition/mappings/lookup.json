@@ -1,0 +1,73 @@
+{
+  "mappings": [
+    {
+      "name": "lookup 521H0001 UNPAID",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/v1/tuitions",
+        "queryParameters": { "mssv": { "equalTo": "521H0001" } }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "mssv": "521H0001",
+          "studentName": "Trần Thị B",
+          "fee": { "feeId": 10, "semester": "2024-2025/HK1", "amount": 8400000, "status": "UNPAID" }
+        }
+      }
+    },
+    {
+      "name": "lookup 521H0002 UNPAID (scenario B)",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/v1/tuitions",
+        "queryParameters": { "mssv": { "equalTo": "521H0002" } }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "mssv": "521H0002",
+          "studentName": "Lê Văn C",
+          "fee": { "feeId": 11, "semester": "2024-2025/HK1", "amount": 9200000, "status": "UNPAID" }
+        }
+      }
+    },
+    {
+      "name": "lookup 521H0003 PAID",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/v1/tuitions",
+        "queryParameters": { "mssv": { "equalTo": "521H0003" } }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "mssv": "521H0003",
+          "studentName": "Phạm Thị D",
+          "fee": { "feeId": 12, "semester": "2023-2024/HK2", "amount": 7600000, "status": "PAID" }
+        }
+      }
+    },
+    {
+      "name": "lookup unknown MSSV -> 404",
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/v1/tuitions"
+      },
+      "response": {
+        "status": 404,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "code": "NOT_FOUND",
+          "message": "Không tìm thấy MSSV",
+          "timestamp": "2026-01-01T00:00:00Z",
+          "traceId": "stub"
+        }
+      }
+    }
+  ]
+}

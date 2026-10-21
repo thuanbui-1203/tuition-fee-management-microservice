@@ -1,0 +1,25 @@
+{
+  "mappings": [
+    {
+      "name": "claim success (default)",
+      "request": { "method": "POST", "urlPath": "/internal/tuitions/claim" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "success": true }
+      }
+    },
+    {
+      "name": "release success (any feeId)",
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/internal/tuitions/[0-9]+/release"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "success": true }
+      }
+    }
+  ]
+}
