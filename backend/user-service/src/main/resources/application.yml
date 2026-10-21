@@ -1,0 +1,24 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/user_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+
+app:
+  jwt:
+    secret: aVeryLongSecretKeyForJwtAuthenticationWhichShouldBeKeptSafe
+    expiration-ms: 1800000 # 30 minutes
+
